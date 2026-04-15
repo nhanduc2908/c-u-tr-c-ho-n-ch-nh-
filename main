@@ -544,3 +544,8 @@ security-assessment-platform/
 | **scripts/** | 11 | Utility scripts |
 
 **Tổng cộng: ~300+ files**
+ 
+Username	Password	Role	Quyền
+admin	123456	Admin	Full quyền, quản lý user, role, backup
+security_officer	123456	Security Officer	Quét server, xử lý cảnh báo, xem báo cáo
+viewer	123456	Viewer	Chỉ xem (read-only)
