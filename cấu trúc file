@@ -1,0 +1,327 @@
+# 📁 CẤU TRÚC FILE HOÀN CHỈNH - SECURITY ASSESSMENT PLATFORM
+
+```
+security-assessment-platform/
+│
+├── 📄 .env.example                          # Mẫu biến môi trường
+├── 📄 .gitignore                            # File bỏ qua khi commit Git
+├── 📄 docker-compose.yml                    # Orchestration container
+├── 📄 Makefile                              # Lệnh tự động hóa
+├── 📄 README.md                             # Tài liệu hướng dẫn
+│
+├── 📁 backend/                              # ⚙️ PHP BACKEND
+│   │
+│   ├── 📄 index.php                         # Entry point - API Gateway
+│   ├── 📄 .htaccess                         # Apache rewrite rules
+│   ├── 📄 composer.json                     # Composer dependencies
+│   │
+│   ├── 📁 api/                              # 🔌 API Routes (15 files)
+│   │   ├── 📄 auth.php                      # Login, logout, refresh
+│   │   ├── 📄 users.php                     # CRUD user (ADMIN)
+│   │   ├── 📄 roles.php                     # Quản lý role (ADMIN)
+│   │   ├── 📄 servers.php                   # CRUD server
+│   │   ├── 📄 categories.php                # 17 lĩnh vực
+│   │   ├── 📄 criteria.php                  # 280 tiêu chí
+│   │   ├── 📄 assessments.php               # Đánh giá server
+│   │   ├── 📄 dashboard.php                 # Thống kê dashboard
+│   │   ├── 📄 vulnerabilities.php           # Lỗ hổng
+│   │   ├── 📄 alerts.php                    # Cảnh báo
+│   │   ├── 📄 reports.php                   # Báo cáo PDF/Excel
+│   │   ├── 📄 backup.php                    # Backup (ADMIN)
+│   │   ├── 📄 profile.php                   # Thông tin cá nhân
+│   │   ├── 📄 audit.php                     # Audit logs (ADMIN)
+│   │   └── 📄 settings.php                  # Cài đặt hệ thống
+│   │
+│   ├── 📁 core/                             # 🧠 LÕI HỆ THỐNG (10 files)
+│   │   ├── 📄 Autoload.php                  # PSR-4 autoloader
+│   │   ├── 📄 Router.php                    # Định tuyến URL
+│   │   ├── 📄 Controller.php                # Base Controller
+│   │   ├── 📄 Model.php                     # Base Model ORM
+│   │   ├── 📄 Database.php                  # PDO Singleton
+│   │   ├── 📄 JWT.php                       # JWT encode/decode
+│   │   ├── 📄 Middleware.php                # Xác thực token
+│   │   ├── 📄 RBAC.php                      # Phân quyền 3 role
+│   │   ├── 📄 Validator.php                 # Validate dữ liệu
+│   │   └── 📄 Logger.php                    # Ghi log hệ thống
+│   │
+│   ├── 📁 controllers/                      # 🎮 CONTROLLERS (15 files)
+│   │   ├── 📄 AuthController.php            # Xử lý đăng nhập
+│   │   ├── 📄 UserController.php            # CRUD user
+│   │   ├── 📄 RoleController.php            # Quản lý role
+│   │   ├── 📄 ServerController.php          # Quản lý server
+│   │   ├── 📄 CategoryController.php        # Quản lý 17 lĩnh vực
+│   │   ├── 📄 CriteriaController.php        # Quản lý 280 tiêu chí
+│   │   ├── 📄 AssessmentController.php      # Đánh giá server
+│   │   ├── 📄 DashboardController.php       # Dashboard data
+│   │   ├── 📄 VulnerabilityController.php   # Lỗ hổng
+│   │   ├── 📄 AlertController.php           # Cảnh báo
+│   │   ├── 📄 ReportController.php          # Báo cáo
+│   │   ├── 📄 BackupController.php          # Backup/restore
+│   │   ├── 📄 ProfileController.php         # Thông tin cá nhân
+│   │   ├── 📄 AuditController.php           # Audit logs
+│   │   └── 📄 SettingController.php         # Cài đặt
+│   │
+│   ├── 📁 models/                           # 🗄️ MODELS (16 files)
+│   │   ├── 📄 User.php                      # users table
+│   │   ├── 📄 Role.php                      # roles table
+│   │   ├── 📄 Permission.php                # permissions table
+│   │   ├── 📄 Server.php                    # servers table
+│   │   ├── 📄 Category.php                  # assessment_categories
+│   │   ├── 📄 Criteria.php                  # assessment_criteria
+│   │   ├── 📄 AssessmentResult.php          # assessment_results
+│   │   ├── 📄 AssessmentReport.php          # assessment_reports
+│   │   ├── 📄 Vulnerability.php             # vulnerabilities
+│   │   ├── 📄 Alert.php                     # alerts
+│   │   ├── 📄 AuditLog.php                  # audit_logs
+│   │   ├── 📄 Backup.php                    # backups
+│   │   ├── 📄 Setting.php                   # settings
+│   │   ├── 📄 Session.php                   # sessions
+│   │   ├── 📄 Token.php                     # refresh_tokens
+│   │   └── 📄 Notification.php              # notifications
+│   │
+│   ├── 📁 middleware/                       # 🛡️ MIDDLEWARE (6 files)
+│   │   ├── 📄 AuthMiddleware.php            # Xác thực JWT
+│   │   ├── 📄 PermissionMiddleware.php      # Kiểm tra quyền 3 role
+│   │   ├── 📄 RateLimitMiddleware.php       # Giới hạn request
+│   │   ├── 📄 CorsMiddleware.php            # Xử lý CORS
+│   │   ├── 📄 LogMiddleware.php             # Ghi log request
+│   │   └── 📄 SecurityHeadersMiddleware.php # Header bảo mật
+│   │
+│   ├── 📁 services/                         # 🔧 SERVICES (12 files)
+│   │   ├── 📄 AuthService.php               # Xác thực
+│   │   ├── 📄 ScannerService.php            # Quét 280 tiêu chí
+│   │   ├── 📄 ScoreCalculatorService.php    # Tính điểm
+│   │   ├── 📄 AttackDetectorService.php     # Phát hiện tấn công
+│   │   ├── 📄 SshConnectionService.php      # Kết nối SSH
+│   │   ├── 📄 ApiCallService.php            # Gọi API ngoài
+│   │   ├── 📄 FileUploadService.php         # Upload file
+│   │   ├── 📄 BackupService.php             # Backup database
+│   │   ├── 📄 RealtimeService.php           # WebSocket push
+│   │   ├── 📄 ReportGeneratorService.php    # PDF/Excel
+│   │   ├── 📄 NotificationService.php       # Email/SMS
+│   │   └── 📄 ImportExportService.php       # Import/Export Excel
+│   │
+│   ├── 📁 config/                           # ⚙️ CONFIG (8 files)
+│   │   ├── 📄 app.php                       # App config
+│   │   ├── 📄 database.php                  # DB config
+│   │   ├── 📄 jwt.php                       # JWT config
+│   │   ├── 📄 rbac.php                      # Role definitions
+│   │   ├── 📄 criteria_categories.php       # 17 lĩnh vực
+│   │   ├── 📄 criteria_280.php              # 280 tiêu chí mẫu
+│   │   ├── 📄 menu.php                      # Menu by role
+│   │   └── 📄 mail.php                      # SMTP config
+│   │
+│   ├── 📁 storage/                          # 💾 STORAGE
+│   │   ├── 📁 logs/                         # Log files
+│   │   │   ├── 📄 app.log
+│   │   │   ├── 📄 auth.log
+│   │   │   ├── 📄 scan.log
+│   │   │   └── 📄 error.log
+│   │   ├── 📁 uploads/                      # Upload files
+│   │   │   ├── 📁 evidence/
+│   │   │   ├── 📁 reports/
+│   │   │   └── 📁 avatars/
+│   │   └── 📁 backups/                      # Backup files
+│   │       ├── 📁 database/
+│   │       └── 📁 files/
+│   │
+│   ├── 📁 database/                         # 🗄️ DATABASE SCRIPTS
+│   │   ├── 📁 migrations/                   # Schema migrations
+│   │   │   ├── 📄 2024_01_01_000001_create_users_table.php
+│   │   │   ├── 📄 2024_01_01_000002_create_roles_table.php
+│   │   │   ├── 📄 2024_01_01_000003_create_categories_table.php
+│   │   │   ├── 📄 2024_01_01_000004_create_criteria_table.php
+│   │   │   ├── 📄 2024_01_01_000005_create_servers_table.php
+│   │   │   ├── 📄 2024_01_01_000006_create_assessment_results_table.php
+│   │   │   ├── 📄 2024_01_01_000007_create_alerts_table.php
+│   │   │   └── 📄 2024_01_15_000001_add_indexes.php
+│   │   └── 📁 seeds/                        # Seed data
+│   │       ├── 📄 DatabaseSeeder.php
+│   │       ├── 📄 RoleSeeder.php
+│   │       ├── 📄 CategorySeeder.php
+│   │       ├── 📄 CriteriaSeeder.php
+│   │       └── 📄 UserSeeder.php
+│   │
+│   └── 📁 tests/                            # 🧪 TESTS
+│       ├── 📁 Unit/
+│       │   ├── 📄 AuthTest.php
+│       │   ├── 📄 RBACTest.php
+│       │   ├── 📄 CriteriaTest.php
+│       │   └── 📄 ScannerTest.php
+│       ├── 📁 Feature/
+│       │   ├── 📄 ApiAuthTest.php
+│       │   ├── 📄 ApiCriteriaTest.php
+│       │   └── 📄 ApiAssessmentTest.php
+│       └── 📄 TestCase.php
+│
+├── 📁 frontend/                             # 🎨 FRONTEND
+│   │
+│   ├── 📄 index.html                        # Redirect page
+│   │
+│   ├── 📁 pages/                            # 📄 HTML PAGES (20 files)
+│   │   ├── 📄 login.html                    # Đăng nhập
+│   │   ├── 📄 dashboard.html                # Dashboard
+│   │   ├── 📄 servers.html                  # Quản lý server
+│   │   ├── 📄 servers-add.html              # Thêm server
+│   │   ├── 📄 servers-edit.html             # Sửa server
+│   │   ├── 📄 servers-detail.html           # Chi tiết server
+│   │   ├── 📄 categories.html               # 17 lĩnh vực
+│   │   ├── 📄 criteria.html                 # 280 tiêu chí
+│   │   ├── 📄 criteria-add.html             # Thêm tiêu chí
+│   │   ├── 📄 criteria-edit.html            # Sửa tiêu chí
+│   │   ├── 📄 criteria-import.html          # Import Excel
+│   │   ├── 📄 assessments.html              # Đánh giá
+│   │   ├── 📄 assessment-run.html           # Chạy đánh giá
+│   │   ├── 📄 assessment-detail.html        # Chi tiết đánh giá
+│   │   ├── 📄 vulnerabilities.html          # Lỗ hổng
+│   │   ├── 📄 alerts.html                   # Cảnh báo
+│   │   ├── 📄 users.html                    # Quản lý user
+│   │   ├── 📄 roles.html                    # Quản lý role
+│   │   ├── 📄 backup.html                   # Backup
+│   │   ├── 📄 reports.html                  # Báo cáo
+│   │   └── 📄 profile.html                  # Thông tin cá nhân
+│   │
+│   ├── 📁 assets/                           # 🎨 ASSETS
+│   │   ├── 📁 css/
+│   │   │   ├── 📄 main.css                  # Style chính
+│   │   │   ├── 📄 admin.css                 # Admin style
+│   │   │   ├── 📄 dashboard.css             # Dashboard style
+│   │   │   ├── 📄 criteria.css              # Criteria table
+│   │   │   └── 📄 responsive.css            # Responsive
+│   │   │
+│   │   ├── 📁 js/
+│   │   │   ├── 📄 app.js                    # Khởi tạo app
+│   │   │   ├── 📄 api.js                    # Gọi API
+│   │   │   ├── 📄 auth.js                   # Login/logout
+│   │   │   ├── 📄 rbac.js                   # Phân quyền frontend
+│   │   │   ├── 📄 utils.js                  # Helper functions
+│   │   │   ├── 📄 dashboard.js              # Dashboard data
+│   │   │   ├── 📄 servers.js                # Server CRUD
+│   │   │   ├── 📄 categories.js             # Category CRUD
+│   │   │   ├── 📄 criteria.js               # Criteria CRUD
+│   │   │   ├── 📄 assessments.js            # Assessment
+│   │   │   ├── 📄 alerts.js                 # Alert handling
+│   │   │   ├── 📄 users.js                  # User CRUD
+│   │   │   ├── 📄 roles.js                  # Role CRUD
+│   │   │   ├── 📄 backup.js                 # Backup
+│   │   │   ├── 📄 reports.js                # Report
+│   │   │   ├── 📄 profile.js                # Profile
+│   │   │   ├── 📄 socket.js                 # WebSocket
+│   │   │   └── 📄 charts.js                 # Charts rendering
+│   │   │
+│   │   └── 📁 vendor/                       # Thư viện bên thứ 3
+│   │       ├── 📁 bootstrap/
+│   │       ├── 📁 jquery/
+│   │       ├── 📁 chart.js/
+│   │       ├── 📁 socket.io/
+│   │       ├── 📁 datatables/
+│   │       └── 📁 fontawesome/
+│   │
+│   └── 📁 templates/                        # Templates
+│       ├── 📄 header.php
+│       ├── 📄 sidebar.php
+│       └── 📄 footer.php
+│
+├── 📁 realtime/                             # ⚡ WEBSOCKET SERVER (Node.js)
+│   │
+│   ├── 📄 server.js                         # Main server
+│   ├── 📄 package.json                      # Dependencies
+│   ├── 📄 ecosystem.config.js               # PM2 config
+│   │
+│   ├── 📁 handlers/
+│   │   ├── 📄 connection.js                 # Xử lý kết nối
+│   │   ├── 📄 auth.js                       # Xác thực
+│   │   ├── 📄 alert.js                      # Push alert
+│   │   ├── 📄 scan.js                       # Scan progress
+│   │   ├── 📄 assessment.js                 # Assessment progress
+│   │   └── 📄 metric.js                     # Metric push
+│   │
+│   └── 📁 utils/
+│       ├── 📄 logger.js                     # Ghi log
+│       └── 📄 redis.js                      # Redis client
+│
+├── 📁 database/                             # 🗄️ RAW SQL SCRIPTS
+│   ├── 📄 schema.sql                        # Full database schema
+│   ├── 📄 seed_all.sql                      # Seed all data
+│   ├── 📄 seed_categories_17.sql            # 17 lĩnh vực
+│   ├── 📄 seed_criteria_280.sql             # 280 tiêu chí
+│   ├── 📄 seed_roles.sql                    # 3 roles
+│   ├── 📄 seed_permissions.sql              # Permissions
+│   ├── 📄 seed_users.sql                    # 3 user mẫu
+│   │
+│   ├── 📁 procedures/                       # Stored procedures
+│   │   ├── 📄 sp_calculate_score.sql
+│   │   └── 📄 sp_get_stats.sql
+│   │
+│   └── 📁 triggers/                         # Database triggers
+│       ├── 📄 trg_audit_user_changes.sql
+│       └── 📄 trg_update_score.sql
+│
+├── 📁 docs/                                 # 📚 DOCUMENTATION
+│   ├── 📄 API.md                            # API documentation
+│   ├── 📄 280-criteria-list.md              # 280 tiêu chí
+│   ├── 📄 user-manual.md                    # Hướng dẫn sử dụng
+│   ├── 📄 admin-manual.md                   # Hướng dẫn admin
+│   └── 📄 deployment.md                     # Hướng dẫn deploy
+│
+└── 📁 scripts/                              # 🔧 UTILITY SCRIPTS
+    ├── 📄 deploy.sh                         # Deploy script
+    ├── 📄 backup.sh                         # Backup script
+    ├── 📄 restore.sh                        # Restore script
+    ├── 📄 import_criteria.php               # Import 280 criteria
+    ├── 📄 export_criteria.php               # Export 280 criteria
+    ├── 📄 run_assessment.php                # CLI assessment
+    ├── 📄 clean_logs.php                    # Clean old logs
+    └── 📄 create_admin.php                  # Create admin user
+```
+
+---
+
+## 📊 THỐNG KÊ FILE
+
+| Thư mục | Số lượng | Mô tả |
+|---------|----------|-------|
+| **backend/api/** | 15 | Route definitions |
+| **backend/core/** | 10 | Core framework |
+| **backend/controllers/** | 15 | Business logic |
+| **backend/models/** | 16 | Database models |
+| **backend/middleware/** | 6 | Request filters |
+| **backend/services/** | 12 | Business services |
+| **backend/config/** | 8 | Configuration |
+| **backend/database/migrations/** | 8 | DB migrations |
+| **backend/database/seeds/** | 5 | Seeders |
+| **backend/tests/** | 7 | Unit/Feature tests |
+| **frontend/pages/** | 20 | HTML pages |
+| **frontend/assets/js/** | 18 | JavaScript files |
+| **frontend/assets/css/** | 5 | CSS files |
+| **realtime/handlers/** | 6 | WebSocket handlers |
+| **database/** | 10 | SQL scripts |
+| **docs/** | 5 | Documentation |
+| **scripts/** | 8 | Utility scripts |
+
+**Tổng cộng: ~170+ files**
+
+---
+
+## 👥 3 LOẠI TÀI KHOẢN & PHÂN QUYỀN
+
+| Chức năng | ADMIN | SECURITY_OFFICER | VIEWER |
+|-----------|-------|------------------|--------|
+| Dashboard | ✅ | ✅ | ✅ |
+| Xem Server | ✅ | ✅ | ✅ |
+| Thêm/Sửa/Xóa Server | ✅ | ✅ | ❌ |
+| Xem 280 tiêu chí | ✅ | ✅ | ✅ |
+| Thêm/Sửa/Xóa tiêu chí | ✅ | ❌ | ❌ |
+| Import/Export tiêu chí | ✅ | ❌ | ❌ |
+| Chạy đánh giá | ✅ | ✅ | ❌ |
+| Đánh giá thủ công | ✅ | ✅ | ❌ |
+| Xem kết quả đánh giá | ✅ | ✅ | ✅ |
+| Xem lỗ hổng | ✅ | ✅ | ✅ |
+| Xem cảnh báo | ✅ | ✅ | ✅ |
+| Xác nhận/giải quyết cảnh báo | ✅ | ✅ | ❌ |
+| Quản lý người dùng | ✅ | ❌ | ❌ |
+| Quản lý role | ✅ | ❌ | ❌ |
+| Xem audit logs | ✅ | ❌ | ❌ |
+| Backup/Restore | ✅ | ❌ | ❌ |
+| Xuất báo cáo | ✅ | ✅ | ❌ |
+| Xem báo cáo | ✅ | ✅ | ✅ |
