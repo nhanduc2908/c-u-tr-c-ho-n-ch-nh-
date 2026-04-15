@@ -1,0 +1,226 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Laravel-style Artisan CLI
+ * Command line interface cho các tác vụ quản trị
+ */
+
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+// Load autoloader
+require_once __DIR__ . '/vendor/autoload.php';
+
+// Load environment
+use Dotenv\Dotenv;
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+// Define base path
+define('BASE_PATH', __DIR__);
+
+// Create application
+$app = new Application('Security Assessment Platform', '3.0.0');
+
+// ============================================
+// COMMAND: migrate
+// ============================================
+$app->register('migrate')
+    ->setDescription('Run database migrations')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln('<info>Running migrations...</info>');
+        
+        $migrationsPath = __DIR__ . '/database/migrations';
+        $files = glob($migrationsPath . '/*.php');
+        
+        foreach ($files as $file) {
+            $output->writeln("  - Running: " . basename($file));
+            require_once $file;
+            $className = pathinfo($file, PATHINFO_FILENAME);
+            $className = 'Migrations\\' . $className;
+            if (class_exists($className)) {
+                $migration = new $className();
+                $migration->up();
+            }
+        }
+        
+        $output->writeln('<info>Migrations completed!</info>');
+        return Command::SUCCESS;
+    });
+
+// ============================================
+// COMMAND: db:seed
+// ============================================
+$app->register('db:seed')
+    ->setDescription('Seed database with initial data')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln('<info>Seeding database...</info>');
+        
+        $seedsPath = __DIR__ . '/database/seeds';
+        $files = glob($seedsPath . '/*.php');
+        
+        foreach ($files as $file) {
+            $output->writeln("  - Seeding: " . basename($file));
+            require_once $file;
+            $className = pathinfo($file, PATHINFO_FILENAME);
+            $className = 'Seeds\\' . $className;
+            if (class_exists($className)) {
+                $seeder = new $className();
+                $seeder->run();
+            }
+        }
+        
+        $output->writeln('<info>Seeding completed!</info>');
+        return Command::SUCCESS;
+    });
+
+// ============================================
+// COMMAND: make:user
+// ============================================
+$app->register('make:user')
+    ->setDescription('Create a new user')
+    ->addArgument('username', null, 'Username')
+    ->addArgument('email', null, 'Email address')
+    ->addArgument('role', null, 'Role (admin/security_officer/viewer)')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $username = $input->getArgument('username');
+        $email = $input->getArgument('email');
+        $role = $input->getArgument('role') ?? 'viewer';
+        
+        if (!$username || !$email) {
+            $output->writeln('<error>Username and email are required!</error>');
+            return Command::FAILURE;
+        }
+        
+        $db = Core\Database::getInstance();
+        
+        // Get role ID
+        $roleId = $db->fetchColumn("SELECT id FROM roles WHERE name = ?", [$role]);
+        if (!$roleId) {
+            $output->writeln("<error>Role '{$role}' not found!</error>");
+            return Command::FAILURE;
+        }
+        
+        // Create user
+        $password = bin2hex(random_bytes(8));
+        $userId = $db->insert('users', [
+            'username' => $username,
+            'email' => $email,
+            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+            'role_id' => $roleId,
+            'is_active' => 1,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+        
+        $output->writeln("<info>User created successfully!</info>");
+        $output->writeln("  ID: {$userId}");
+        $output->writeln("  Username: {$username}");
+        $output->writeln("  Password: {$password}");
+        $output->writeln("  Role: {$role}");
+        
+        return Command::SUCCESS;
+    });
+
+// ============================================
+// COMMAND: scan:server
+// ============================================
+$app->register('scan:server')
+    ->setDescription('Run security scan on a server')
+    ->addArgument('server_id', null, 'Server ID to scan')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $serverId = $input->getArgument('server_id');
+        
+        if (!$serverId) {
+            $output->writeln('<error>Server ID is required!</error>');
+            return Command::FAILURE;
+        }
+        
+        $output->writeln("<info>Starting scan for server ID: {$serverId}...</info>");
+        
+        $scanner = new Services\ScannerService();
+        $result = $scanner->scanServer($serverId);
+        
+        if ($result['success']) {
+            $output->writeln("<info>Scan completed!</info>");
+            $output->writeln("  Score: {$result['total_score']}%");
+            $output->writeln("  Passed: {$result['passed']}/{$result['total']}");
+        } else {
+            $output->writeln("<error>Scan failed: {$result['error']}</error>");
+            return Command::FAILURE;
+        }
+        
+        return Command::SUCCESS;
+    });
+
+// ============================================
+// COMMAND: backup:create
+// ============================================
+$app->register('backup:create')
+    ->setDescription('Create database backup')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln('<info>Creating database backup...</info>');
+        
+        $backup = new Services\BackupService();
+        $result = $backup->createBackup();
+        
+        if ($result['success']) {
+            $output->writeln("<info>Backup created: {$result['filename']}</info>");
+            $output->writeln("  Size: " . round($result['size'] / 1024 / 1024, 2) . " MB");
+        } else {
+            $output->writeln("<error>Backup failed: {$result['error']}</error>");
+            return Command::FAILURE;
+        }
+        
+        return Command::SUCCESS;
+    });
+
+// ============================================
+// COMMAND: cache:clear
+// ============================================
+$app->register('cache:clear')
+    ->setDescription('Clear all caches')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln('<info>Clearing caches...</info>');
+        
+        $cachePath = __DIR__ . '/storage/cache';
+        if (is_dir($cachePath)) {
+            $files = glob($cachePath . '/*');
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+            $output->writeln('  - Cache cleared');
+        }
+        
+        $output->writeln('<info>Cache cleared successfully!</info>');
+        return Command::SUCCESS;
+    });
+
+// ============================================
+// COMMAND: route:list
+// ============================================
+$app->register('route:list')
+    ->setDescription('List all registered routes')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln('<info>Registered routes:</info>');
+        
+        $apiFiles = glob(__DIR__ . '/api/*.php');
+        foreach ($apiFiles as $file) {
+            $output->writeln("  - " . basename($file));
+        }
+        
+        return Command::SUCCESS;
+    });
+
+// ============================================
+// RUN APPLICATION
+// ============================================
+try {
+    $app->run();
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+    exit(1);
+}

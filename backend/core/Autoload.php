@@ -8,7 +8,7 @@
 
 namespace Core;
 
-class Autoloader
+class Autoload
 {
     /**
      * Đăng ký autoloader vào SPL stack
