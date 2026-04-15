@@ -1,0 +1,62 @@
+# Composer
+vendor/
+composer.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+storage/logs/*.log
+backend/storage/logs/*.log
+
+# Cache
+storage/cache/
+storage/framework/
+storage/views/
+.cache/
+
+# Uploads
+storage/uploads/evidence/*
+storage/uploads/reports/*
+storage/uploads/temp/*
+!storage/uploads/.gitkeep
+
+# Backups
+storage/backups/*.sql
+storage/backups/*.zip
+storage/backups/*.gz
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log
+realtime/node_modules/
+
+# Testing
+coverage/
+tests/coverage/
+.phpunit.result.cache
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# SSL
+*.key
+*.crt
+*.pem
+
+# Docker
+*.pid

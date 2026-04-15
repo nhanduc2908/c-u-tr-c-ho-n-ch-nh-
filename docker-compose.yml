@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: security-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./backend:/var/www/html
+      - ./frontend:/var/www/html/frontend
+      - .docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+      - node
+    networks:
+      - security-network
+    restart: unless-stopped
+
+  # PHP 8.2 FPM
+  php:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile.php
+    container_name: security-php
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/storage:/var/www/html/storage
+    environment:
+      - PHP_MEMORY_LIMIT=512M
+      - PHP_MAX_EXECUTION_TIME=300
+      - PHP_POST_MAX_SIZE=50M
+      - PHP_UPLOAD_MAX_FILESIZE=50M
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - security-network
+    restart: unless-stopped
+
+  # MySQL 8.0 Database
+  mysql:
+    image: mysql:8.0
+    container_name: security-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seed_all.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - security-network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: security-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    networks:
+      - security-network
+    restart: unless-stopped
+
+  # Node.js WebSocket Server
+  node:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile.node
+    container_name: security-node
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./realtime:/app
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - DB_HOST=mysql
+    depends_on:
+      - redis
+      - mysql
+    networks:
+      - security-network
+    restart: unless-stopped
+
+  # PHPMyAdmin (Development only)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: security-phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    depends_on:
+      - mysql
+    networks:
+      - security-network
+    profiles:
+      - dev
+
+networks:
+  security-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
