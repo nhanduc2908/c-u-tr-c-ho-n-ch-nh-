@@ -1,0 +1,10 @@
+# ============================================
+# .gitkeep - Giữ thư mục uploads
+# ============================================
+#
+# Thư mục này chứa file upload của người dùng
+# Bao gồm: evidence, reports, avatars
+#
+# ============================================
+
+# Chỉ giữ thư mục

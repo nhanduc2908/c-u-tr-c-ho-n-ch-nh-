@@ -15,18 +15,15 @@ namespace Controllers;
 
 use Core\Controller;
 use Core\Database;
-use Services\RealtimeService;
 
 class AlertController extends Controller
 {
     private $db;
-    private $realtime;
     
     public function __construct()
     {
         parent::__construct();
         $this->db = Database::getInstance();
-        $this->realtime = new RealtimeService();
     }
     
     /**

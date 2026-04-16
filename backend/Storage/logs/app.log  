@@ -1,0 +1,75 @@
+[2024-12-15 00:00:01] APP.INFO: ============================================
+[2024-12-15 00:00:01] APP.INFO: SECURITY ASSESSMENT PLATFORM v3.0.0
+[2024-12-15 00:00:01] APP.INFO: ============================================
+[2024-12-15 00:00:01] APP.INFO: System initialized
+[2024-12-15 00:00:01] APP.INFO: Environment: production
+[2024-12-15 00:00:01] APP.INFO: PHP Version: 8.2.12
+[2024-12-15 00:00:01] APP.INFO: Memory limit: 512M
+[2024-12-15 00:00:01] APP.INFO: Max execution time: 300 seconds
+[2024-12-15 00:00:02] APP.INFO: Database connected successfully
+[2024-12-15 00:00:02] APP.INFO: Redis cache connected
+[2024-12-15 00:00:02] APP.INFO: WebSocket server connection established
+
+[2024-12-15 08:05:23] APP.INFO: User login successful
+[2024-12-15 08:05:23] APP.INFO:   - User ID: 1
+[2024-12-15 08:05:23] APP.INFO:   - Username: admin
+[2024-12-15 08:05:23] APP.INFO:   - IP: 192.168.1.100
+[2024-12-15 08:05:23] APP.INFO:   - User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0
+
+[2024-12-15 08:10:15] APP.INFO: Assessment scan completed
+[2024-12-15 08:10:15] APP.INFO:   - Server ID: 1
+[2024-12-15 08:10:15] APP.INFO:   - Server Name: web-server-01
+[2024-12-15 08:10:15] APP.INFO:   - Total Score: 85.5%
+[2024-12-15 08:10:15] APP.INFO:   - Passed: 250/280
+[2024-12-15 08:10:15] APP.INFO:   - Failed: 30/280
+[2024-12-15 08:10:15] APP.INFO:   - Duration: 90 seconds
+
+[2024-12-15 08:15:42] APP.INFO: Report generated
+[2024-12-15 08:15:42] APP.INFO:   - Report ID: 123
+[2024-12-15 08:15:42] APP.INFO:   - Type: PDF
+[2024-12-15 08:15:42] APP.INFO:   - Size: 1.2 MB
+[2024-12-15 08:15:42] APP.INFO:   - Path: /storage/reports/report_server_1_20241215.pdf
+
+[2024-12-15 09:00:00] APP.INFO: Scheduled backup completed
+[2024-12-15 09:00:00] APP.INFO:   - Filename: database_backup_20241215_020001.sql.gz
+[2024-12-15 09:00:00] APP.INFO:   - Size: 45.3 MB
+[2024-12-15 09:00:00] APP.INFO:   - Type: database
+[2024-12-15 09:00:00] APP.INFO:   - Retention: 30 days
+
+[2024-12-15 10:30:00] APP.ERROR: Database connection timeout
+[2024-12-15 10:30:00] APP.ERROR:   - Error: SQLSTATE[HY000] [2002] Connection timed out
+[2024-12-15 10:30:00] APP.ERROR:   - Host: localhost:3306
+[2024-12-15 10:30:00] APP.ERROR:   - Attempt: 1/3
+[2024-12-15 10:30:05] APP.INFO: Database reconnected successfully
+[2024-12-15 10:30:05] APP.INFO:   - Connection restored after 5 seconds
+
+[2024-12-15 12:00:00] APP.INFO: Cache cleared
+[2024-12-15 12:00:00] APP.INFO:   - Cache type: system
+[2024-12-15 12:00:00] APP.INFO:   - Files removed: 156
+[2024-12-15 12:00:00] APP.INFO:   - Space freed: 24.7 MB
+
+[2024-12-15 14:20:15] APP.WARNING: Slow API request detected
+[2024-12-15 14:20:15] APP.WARNING:   - Endpoint: /api/assessments/run
+[2024-12-15 14:20:15] APP.WARNING:   - Duration: 5.23 seconds
+[2024-12-15 14:20:15] APP.WARNING:   - Threshold: 3 seconds
+
+[2024-12-15 16:45:30] APP.ERROR: File upload failed
+[2024-12-15 16:45:30] APP.ERROR:   - User ID: 3
+[2024-12-15 16:45:30] APP.ERROR:   - Filename: suspicious_file.exe
+[2024-12-15 16:45:30] APP.ERROR:   - Error: File type not allowed
+[2024-12-15 16:45:30] APP.ERROR:   - Size: 2.3 MB
+
+[2024-12-15 18:00:00] APP.INFO: Daily summary
+[2024-12-15 18:00:00] APP.INFO:   - Total API requests: 1,234
+[2024-12-15 18:00:00] APP.INFO:   - Successful requests: 1,189 (96.4%)
+[2024-12-15 18:00:00] APP.INFO:   - Failed requests: 45 (3.6%)
+[2024-12-15 18:00:00] APP.INFO:   - Average response time: 124ms
+[2024-12-15 18:00:00] APP.INFO:   - Peak memory usage: 156 MB
+[2024-12-15 18:00:00] APP.INFO:   - Active users: 12
+[2024-12-15 18:00:00] APP.INFO:   - New assessments: 8
+[2024-12-15 18:00:00] APP.INFO:   - New alerts: 23
+
+[2024-12-15 23:59:59] APP.INFO: ============================================
+[2024-12-15 23:59:59] APP.INFO: System shutdown
+[2024-12-15 23:59:59] APP.INFO: Uptime: 23 hours 59 minutes 58 seconds
+[2024-12-15 23:59:59] APP.INFO: ============================================
