@@ -56,4 +56,19 @@ class ServerSeeder
                 'name' => 'Staging Server',
                 'ip_address' => '192.168.2.10',
                 'hostname' => 'web01.staging.local',
-                'os' => '
+                'os' => 'Ubuntu 22.04 LTS',
+                'environment' => 'staging',
+                'status' => 'active',
+                'ssh_port' => 22,
+                'ssh_username' => 'admin',
+                'created_at' => date('Y-m-d H:i:s')
+            ]
+        ];
+        
+        foreach ($servers as $server) {
+            $db->insert('servers', $server);
+        }
+        
+        echo "      - Created " . count($servers) . " demo servers\n";
+    }
+}
