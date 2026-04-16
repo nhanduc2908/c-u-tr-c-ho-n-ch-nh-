@@ -1,572 +1,805 @@
+# 📄 README.md - Security Assessment Platform
+
+```markdown
+# 🔐 SECURITY ASSESSMENT PLATFORM
+
+[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/security-platform/assessment)
+[![PHP](https://img.shields.io/badge/PHP-8.1+-777BB4.svg)](https://php.net)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1.svg)](https://mysql.com)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/security-platform/assessment)
+
+Hệ thống đánh giá và giám sát bảo mật CNTT chuyên nghiệp với **280 tiêu chí**, **17 lĩnh vực**, hỗ trợ **3 loại tài khoản** (Admin, Security Officer, Viewer).
+
+---
+
+## 📋 MỤC LỤC
+
+- [Tính năng nổi bật](#-tính-năng-nổi-bật)
+- [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
+- [Công nghệ sử dụng](#-công-nghệ-sử-dụng)
+- [Cài đặt nhanh](#-cài-đặt-nhanh)
+- [Cấu hình](#-cấu-hình)
+- [Tài khoản mặc định](#-tài-khoản-mặc-định)
+- [API Endpoints](#-api-endpoints)
+- [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
+- [Development](#-development)
+- [Triển khai Production](#-triển-khai-production)
+- [Xử lý sự cố](#-xử-lý-sự-cố)
+- [Tài liệu](#-tài-liệu)
+- [License](#-license)
+
+---
+
+## 🚀 TÍNH NĂNG NỔI BẬT
+
+### 🔐 Quản lý người dùng & Phân quyền
+| Tính năng | Mô tả |
+|-----------|-------|
+| **3 loại tài khoản** | Admin, Security Officer, Viewer với quyền hạn riêng |
+| **RBAC chi tiết** | Phân quyền đến từng chức năng (user, server, criteria, assessment) |
+| **JWT Authentication** | Xác thực API an toàn, hỗ trợ refresh token |
+| **2FA** | Xác thực hai lớp (TOTP) cho tài khoản quan trọng |
+| **Audit Log** | Ghi lại mọi hành động của người dùng |
+
+### 📋 Quản lý đánh giá (280 tiêu chí)
+| Tính năng | Mô tả |
+|-----------|-------|
+| **17 lĩnh vực** | IAM, Network, Application, Data, Cloud, IoT, AI, Compliance... |
+| **280 tiêu chí** | Import/Export Excel, CRUD đầy đủ |
+| **Đánh giá tự động** | SSH, API, SQL, Command |
+| **Đánh giá thủ công** | Upload bằng chứng, ghi chú |
+| **Tính điểm thông minh** | Theo trọng số tiêu chí và lĩnh vực |
+
+### 🖥️ Quản lý Server
+| Tính năng | Mô tả |
+|-----------|-------|
+| **CRUD server** | Thêm, sửa, xóa server cần đánh giá |
+| **Kiểm tra kết nối** | Ping, SSH, Port scan |
+| **Phân loại môi trường** | Production, Staging, Development |
+| **Lịch sử đánh giá** | Xem xu hướng điểm theo thời gian |
+
+### 🔔 Cảnh báo & Giám sát
+| Tính năng | Mô tả |
+|-----------|-------|
+| **WebSocket realtime** | Đẩy cảnh báo ngay lập tức |
+| **Phát hiện tấn công** | SQLi, XSS, Path Traversal, Command Injection |
+| **Brute force protection** | Tự động khóa IP khi đăng nhập sai nhiều lần |
+| **Phân loại severity** | Critical, High, Medium, Low, Info |
+
+### 📄 Báo cáo & Xuất dữ liệu
+| Tính năng | Mô tả |
+|-----------|-------|
+| **Báo cáo PDF** | Đánh giá chi tiết từng server |
+| **Báo cáo Excel/CSV** | Xuất dữ liệu phân tích |
+| **Báo cáo Compliance** | ISO 27001, NIST, PCI-DSS, GDPR |
+| **Lên lịch báo cáo** | Tự động gửi email báo cáo định kỳ |
+
+### 💾 Backup & Restore
+| Tính năng | Mô tả |
+|-----------|-------|
+| **Backup database** | Tự động hàng ngày, lưu trữ 30 ngày |
+| **Backup files** | Backup uploads, config |
+| **Restore** | Khôi phục dữ liệu từ backup |
+| **Cron jobs** | Tự động dọn dẹp log, backup |
+
+---
+
+## 🏗️ KIẾN TRÚC HỆ THỐNG
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              CLIENT (Browser/Mobile/API)                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           NGINX (Reverse Proxy)                              │
+│                         Port 80 (HTTP) / 443 (HTTPS)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+              ┌───────────────────────┼───────────────────────┐
+              │                       │                       │
+              ▼                       ▼                       ▼
+┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
+│    PHP-FPM:9000     │ │   Node.js:3000      │ │    MySQL:3306       │
+│     (Backend)       │ │   (WebSocket)       │ │    (Database)       │
+│                     │ │                     │ │                     │
+│ • API Routes        │ │ • Realtime alerts   │ │ • Users             │
+│ • Authentication    │ │ • Scan progress     │ │ • Servers           │
+│ • Business logic    │ │ • Metrics push      │ │ • Criteria (280)    │
+│ • Report generation │ │                     │ │ • Assessment results│
+└─────────────────────┘ └─────────────────────┘ └─────────────────────┘
+              │                       │                       │
+              └───────────────────────┼───────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Redis (Cache)                                   │
+│                         Session, Queue, Rate Limiting                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Luồng dữ liệu chính
+
+| Bước | Mô tả |
+|------|-------|
+| 1 | Client gửi request → **Nginx** (reverse proxy) |
+| 2 | **Nginx** phân phối: API → PHP-FPM, WebSocket → Node.js |
+| 3 | **PHP** xử lý logic, truy vấn **MySQL**, trả JSON |
+| 4 | **Node.js** đẩy realtime event qua WebSocket |
+| 5 | **Redis** cache dữ liệu nóng, quản lý session |
+
+---
+
+## 🛠️ CÔNG NGHỆ SỬ DỤNG
+
+| Thành phần | Công nghệ | Phiên bản |
+|------------|-----------|-----------|
+| **Backend** | PHP (Custom MVC) | 8.1+ |
+| **Database** | MySQL | 8.0+ |
+| **Cache** | Redis | 7.0+ |
+| **WebSocket** | Node.js + Socket.io | 18+ |
+| **Frontend** | HTML5, CSS3, JavaScript (Vanilla) | - |
+| **Authentication** | JWT | - |
+| **PDF Generation** | FPDF | 1.8+ |
+| **Excel Export** | PhpSpreadsheet | 1.29+ |
+| **Email** | PHPMailer | 6.8+ |
+| **Testing** | PHPUnit | 10.0+ |
+
+---
+
+## ⚡ CÀI ĐẶT NHANH
+
+### Yêu cầu hệ thống
+
+| Thành phần | Phiên bản tối thiểu | Khuyến nghị |
+|------------|---------------------|-------------|
+| PHP | 8.1 | 8.2+ |
+| MySQL | 8.0 | 8.0+ |
+| Node.js | 18 | 20+ |
+| Composer | 2.0 | 2.5+ |
+| RAM | 1GB | 2GB+ |
+| Disk | 1GB | 5GB+ |
+
+### Cách 1: Cài đặt với Docker (Khuyến nghị)
+
+```bash
+# 1. Clone dự án
+git clone https://github.com/security-platform/assessment.git
+cd security-assessment-platform
+
+# 2. Copy environment
+cp .env.example .env
+
+# 3. Chỉnh sửa .env (DB_PASSWORD, JWT_SECRET...)
+nano .env
+
+# 4. Chạy Docker
+docker-compose up -d
+
+# 5. Kiểm tra
+docker-compose ps
+
+# 6. Truy cập
+http://localhost
+```
+
+### Cách 2: Cài đặt với XAMPP
+
+```bash
+# 1. Copy dự án vào htdocs
+cp -r security-assessment-platform C:/xampp/htdocs/
+
+# 2. Copy .env
+cd C:/xampp/htdocs/security-assessment-platform
+cp .env.example .env
+
+# 3. Cấu hình database trong .env
+DB_HOST=localhost
+DB_NAME=security_db
+DB_USER=root
+DB_PASSWORD=
+
+# 4. Import database
+mysql -u root -p < database/schema.sql
+mysql -u root -p < database/seed_all.sql
+
+# 5. Cài đặt PHP dependencies
+cd backend
+composer install
+
+# 6. Cài đặt Node.js dependencies
+cd ../realtime
+npm install
+
+# 7. Khởi động
+# - Start Apache & MySQL từ XAMPP Control Panel
+# - Start WebSocket: cd realtime && npm start
+# - Truy cập: http://localhost/security-assessment-platform/frontend
+```
+
+### Cách 3: Cài đặt thủ công (Ubuntu/Debian)
+
+```bash
+# 1. Update hệ thống
+sudo apt update && sudo apt upgrade -y
+
+# 2. Cài đặt PHP và extensions
+sudo apt install -y php8.1 php8.1-fpm php8.1-mysql php8.1-mbstring \
+    php8.1-xml php8.1-curl php8.1-zip php8.1-gd php8.1-intl
+
+# 3. Cài đặt MySQL
+sudo apt install -y mysql-server-8.0
+
+# 4. Cài đặt Nginx
+sudo apt install -y nginx
+
+# 5. Cài đặt Node.js
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 6. Cài đặt Composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+
+# 7. Deploy code
+sudo mkdir -p /var/www/security
+sudo chown -R $USER:$USER /var/www/security
+git clone https://github.com/security-platform/assessment.git /var/www/security
+
+# 8. Cài đặt
+cd /var/www/security
+cp .env.example .env
+composer install --no-dev --optimize-autoloader
+npm install --prefix realtime
+
+# 9. Import database
+mysql -u root -p < database/schema.sql
+mysql -u root -p < database/seed_all.sql
+
+# 10. Cấu hình Nginx (xem phần Cấu hình)
+```
+
+---
+
+## ⚙️ CẤU HÌNH
+
+### Cấu hình Database (.env)
+
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=security_db
+DB_USER=root
+DB_PASSWORD=your_strong_password
+```
+
+### Cấu hình JWT
+
+```env
+JWT_SECRET=your-super-secret-key-at-least-32-characters
+JWT_TTL=3600          # 1 hour
+JWT_REFRESH_TTL=604800 # 7 days
+```
+
+### Cấu hình Email (SMTP)
+
+```env
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@security.com
+MAIL_FROM_NAME="Security Assessment Platform"
+```
+
+### Cấu hình Nginx (Production)
+
+```nginx
+server {
+    listen 80;
+    server_name security.example.com;
+    root /var/www/security/frontend;
+    
+    index index.html;
+    
+    # API routes
+    location /api/ {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    
+    # WebSocket
+    location /ws/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+    
+    # Frontend
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Static assets
+    location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+---
+
+## 👥 TÀI KHOẢN MẶC ĐỊNH
+
+| Username | Password | Role | Mô tả quyền |
+|----------|----------|------|-------------|
+| `admin` | `123456` | **Admin** | Full quyền: quản lý user, role, backup, audit, settings |
+| `security_officer` | `123456` | **Security Officer** | Quét server, xử lý cảnh báo, xem báo cáo, quản lý server |
+| `viewer` | `123456` | **Viewer** | Chỉ xem dashboard, criteria, alerts, reports |
+
+> ⚠️ **QUAN TRỌNG**: Đổi mật khẩu ngay sau lần đăng nhập đầu tiên!
+
+---
+
+## 🔗 API ENDPOINTS
+
+### 🔐 Authentication
+
+| Method | Endpoint | Mô tả | Quyền |
+|--------|----------|-------|-------|
+| POST | `/api/auth/login` | Đăng nhập | Public |
+| POST | `/api/auth/logout` | Đăng xuất | Authenticated |
+| POST | `/api/auth/refresh` | Refresh token | Authenticated |
+| GET | `/api/auth/me` | Thông tin user | Authenticated |
+| PUT | `/api/auth/change-password` | Đổi mật khẩu | Authenticated |
+| POST | `/api/auth/forgot-password` | Quên mật khẩu | Public |
+| POST | `/api/auth/reset-password` | Đặt lại mật khẩu | Public |
+
+### 👥 Users (Admin only)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/api/users` | Danh sách user |
+| GET | `/api/users/{id}` | Chi tiết user |
+| POST | `/api/users` | Tạo user |
+| PUT | `/api/users/{id}` | Cập nhật user |
+| DELETE | `/api/users/{id}` | Xóa user |
+| POST | `/api/users/{id}/reset-password` | Reset mật khẩu |
+
+### 🖥️ Servers (Admin + Officer)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/api/servers` | Danh sách server |
+| GET | `/api/servers/{id}` | Chi tiết server |
+| POST | `/api/servers` | Thêm server |
+| PUT | `/api/servers/{id}` | Sửa server |
+| DELETE | `/api/servers/{id}` | Xóa server |
+| POST | `/api/servers/{id}/scan` | Quét server |
+| POST | `/api/servers/{id}/test-connection` | Kiểm tra kết nối |
+
+### 📋 Criteria (280 tiêu chí)
+
+| Method | Endpoint | Mô tả | Quyền |
+|--------|----------|-------|-------|
+| GET | `/api/criteria` | Danh sách tiêu chí | All |
+| GET | `/api/criteria/{id}` | Chi tiết tiêu chí | All |
+| POST | `/api/criteria` | Thêm tiêu chí | Admin |
+| PUT | `/api/criteria/{id}` | Sửa tiêu chí | Admin |
+| DELETE | `/api/criteria/{id}` | Xóa tiêu chí | Admin |
+| POST | `/api/criteria/import` | Import Excel | Admin |
+| GET | `/api/criteria/export` | Export Excel | Admin |
+
+### 🔍 Assessments (Admin + Officer)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/api/assessments` | Danh sách đánh giá |
+| GET | `/api/assessments/{id}` | Chi tiết đánh giá |
+| POST | `/api/assessments/run` | Chạy đánh giá mới |
+| POST | `/api/assessments/server/{id}/run` | Chạy đánh giá cho server |
+| PUT | `/api/assessments/{id}/manual` | Cập nhật thủ công |
+| POST | `/api/assessments/{id}/evidence` | Upload bằng chứng |
+
+### 📊 Dashboard (All)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/api/dashboard/stats` | Thống kê tổng quan |
+| GET | `/api/dashboard/charts` | Dữ liệu biểu đồ |
+| GET | `/api/dashboard/trends` | Xu hướng điểm |
+| GET | `/api/dashboard/recent-alerts` | Cảnh báo gần đây |
+| GET | `/api/dashboard/recent-activities` | Hoạt động gần đây |
+
+### 🔔 Alerts (All)
+
+| Method | Endpoint | Mô tả | Quyền |
+|--------|----------|-------|-------|
+| GET | `/api/alerts` | Danh sách cảnh báo | All |
+| GET | `/api/alerts/{id}` | Chi tiết cảnh báo | All |
+| PUT | `/api/alerts/{id}/acknowledge` | Xác nhận | Officer |
+| PUT | `/api/alerts/{id}/resolve` | Giải quyết | Officer |
+| POST | `/api/alerts/{id}/note` | Thêm ghi chú | Officer |
+
+### 📄 Reports (All)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/api/reports` | Danh sách báo cáo |
+| POST | `/api/reports/generate` | Tạo báo cáo PDF |
+| GET | `/api/reports/{id}/download` | Tải báo cáo |
+| POST | `/api/reports/export-excel` | Xuất Excel |
+| POST | `/api/reports/schedule` | Lên lịch báo cáo |
+
+### 💾 Backup (Admin only)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/api/backup` | Danh sách backup |
+| POST | `/api/backup/create` | Tạo backup |
+| GET | `/api/backup/{id}/download` | Tải backup |
+| POST | `/api/backup/{id}/restore` | Khôi phục |
+| DELETE | `/api/backup/{id}` | Xóa backup |
+
+### 🏥 Health Check (Public)
+
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| GET | `/api/health` | Kiểm tra sức khỏe |
+| GET | `/api/health/detailed` | Chi tiết hệ thống |
+| GET | `/api/health/ready` | Readiness probe |
+| GET | `/api/health/live` | Liveness probe |
+
+---
+
+## 📁 CẤU TRÚC THƯ MỤC
+
+```
 security-assessment-platform/
 │
-├── 📄 .env.example
-├── 📄 .gitignore
-├── 📄 docker-compose.yml
-├── 📄 Makefile
-├── 📄 README.md
+├── 📁 backend/                 # PHP Backend (API, Core, Controllers, Models)
+│   ├── 📁 api/                 # Route definitions (30 files)
+│   ├── 📁 core/                # Framework core (15 files)
+│   ├── 📁 controllers/         # Business logic (28 files)
+│   ├── 📁 models/              # Database models (20 files)
+│   ├── 📁 middleware/          # Request filters (10 files)
+│   ├── 📁 services/            # Business services (12 files)
+│   ├── 📁 config/              # Configuration (12 files)
+│   ├── 📁 database/            # Migrations & Seeds
+│   └── 📁 storage/             # Logs, uploads, backups
 │
-├── 📁 backend/
-│   ├── 📄 index.php
-│   ├── 📄 .htaccess
-│   ├── 📄 composer.json
-│   ├── 📄 artisan
-│   │
-│   ├── 📁 api/
-│   │   ├── 📄 v1.php
-│   │   ├── 📄 auth.php
-│   │   ├── 📄 users.php
-│   │   ├── 📄 roles.php
-│   │   ├── 📄 servers.php
-│   │   ├── 📄 categories.php
-│   │   ├── 📄 criteria.php
-│   │   ├── 📄 assessments.php
-│   │   ├── 📄 dashboard.php
-│   │   ├── 📄 vulnerabilities.php
-│   │   ├── 📄 alerts.php
-│   │   ├── 📄 reports.php
-│   │   ├── 📄 backup.php
-│   │   ├── 📄 profile.php
-│   │   ├── 📄 audit.php
-│   │   ├── 📄 settings.php
-│   │   ├── 📄 health.php
-│   │   ├── 📄 webhooks.php
-│   │   ├── 📄 notifications.php
-│   │   ├── 📄 search.php
-│   │   ├── 📄 export.php
-│   │   ├── 📄 import.php
-│   │   ├── 📄 stats.php
-│   │   ├── 📄 compliance.php
-│   │   ├── 📄 schedules.php
-│   │   ├── 📄 queue.php
-│   │   ├── 📄 cache.php
-│   │   ├── 📄 logs.php
-│   │   ├── 📄 debug.php
-│   │   └── 📄 docs.php
-│   │
-│   ├── 📁 core/
-│   │   ├── 📄 Autoload.php
-│   │   ├── 📄 Router.php
-│   │   ├── 📄 Controller.php
-│   │   ├── 📄 Model.php
-│   │   ├── 📄 Database.php
-│   │   ├── 📄 JWT.php
-│   │   ├── 📄 Middleware.php
-│   │   ├── 📄 RBAC.php
-│   │   ├── 📄 Validator.php
-│   │   ├── 📄 Logger.php
-│   │   ├── 📄 Cache.php
-│   │   ├── 📄 Encryption.php
-│   │   ├── 📄 Event.php
-│   │   ├── 📄 Queue.php
-│   │   └── 📄 Helper.php
-│   │
-│   ├── 📁 controllers/
-│   │   ├── 📄 AuthController.php
-│   │   ├── 📄 UserController.php
-│   │   ├── 📄 RoleController.php
-│   │   ├── 📄 ServerController.php
-│   │   ├── 📄 CategoryController.php
-│   │   ├── 📄 CriteriaController.php
-│   │   ├── 📄 AssessmentController.php
-│   │   ├── 📄 DashboardController.php
-│   │   ├── 📄 VulnerabilityController.php
-│   │   ├── 📄 AlertController.php
-│   │   ├── 📄 ReportController.php
-│   │   ├── 📄 BackupController.php
-│   │   ├── 📄 ProfileController.php
-│   │   ├── 📄 AuditController.php
-│   │   ├── 📄 SettingController.php
-│   │   ├── 📄 HealthController.php
-│   │   ├── 📄 WebhookController.php
-│   │   ├── 📄 NotificationController.php
-│   │   ├── 📄 SearchController.php
-│   │   ├── 📄 ExportController.php
-│   │   ├── 📄 ImportController.php
-│   │   ├── 📄 StatsController.php
-│   │   ├── 📄 ComplianceController.php
-│   │   ├── 📄 ScheduleController.php
-│   │   ├── 📄 QueueController.php
-│   │   ├── 📄 CacheController.php
-│   │   ├── 📄 LogController.php
-│   │   ├── 📄 DebugController.php
-│   │   └── 📄 DocController.php
-│   │
-│   ├── 📁 models/
-│   │   ├── 📄 User.php
-│   │   ├── 📄 Role.php
-│   │   ├── 📄 Permission.php
-│   │   ├── 📄 Server.php
-│   │   ├── 📄 Category.php
-│   │   ├── 📄 Criteria.php
-│   │   ├── 📄 AssessmentResult.php
-│   │   ├── 📄 AssessmentReport.php
-│   │   ├── 📄 Vulnerability.php
-│   │   ├── 📄 Alert.php
-│   │   ├── 📄 AuditLog.php
-│   │   ├── 📄 Backup.php
-│   │   ├── 📄 Setting.php
-│   │   ├── 📄 Session.php
-│   │   ├── 📄 Token.php
-│   │   ├── 📄 Notification.php
-│   │   ├── 📄 Job.php
-│   │   ├── 📄 FailedJob.php
-│   │   ├── 📄 Schedule.php
-│   │   └── 📄 Webhook.php
-│   │
-│   ├── 📁 middleware/
-│   │   ├── 📄 AuthMiddleware.php
-│   │   ├── 📄 PermissionMiddleware.php
-│   │   ├── 📄 RateLimitMiddleware.php
-│   │   ├── 📄 CorsMiddleware.php
-│   │   ├── 📄 SecurityHeadersMiddleware.php
-│   │   ├── 📄 LogMiddleware.php
-│   │   ├── 📄 CacheMiddleware.php
-│   │   ├── 📄 MaintenanceMiddleware.php
-│   │   ├── 📄 JsonMiddleware.php
-│   │   └── 📄 CsrfMiddleware.php
-│   │
-│   ├── 📁 services/
-│   │   ├── 📄 AuthService.php
-│   │   ├── 📄 ScannerService.php
-│   │   ├── 📄 ScoreCalculatorService.php
-│   │   ├── 📄 AttackDetectorService.php
-│   │   ├── 📄 SshConnectionService.php
-│   │   ├── 📄 ApiCallService.php
-│   │   ├── 📄 FileUploadService.php
-│   │   ├── 📄 BackupService.php
-│   │   ├── 📄 RealtimeService.php
-│   │   ├── 📄 ReportGeneratorService.php
-│   │   ├── 📄 NotificationService.php
-│   │   └── 📄 ImportExportService.php
-│   │
-│   ├── 📁 repositories/
-│   │   ├── 📄 UserRepository.php
-│   │   ├── 📄 ServerRepository.php
-│   │   ├── 📄 CriteriaRepository.php
-│   │   ├── 📄 AssessmentRepository.php
-│   │   ├── 📄 AlertRepository.php
-│   │   └── 📄 ReportRepository.php
-│   │
-│   ├── 📁 jobs/
-│   │   ├── 📄 ScanServerJob.php
-│   │   ├── 📄 SendEmailJob.php
-│   │   ├── 📄 GenerateReportJob.php
-│   │   ├── 📄 BackupDatabaseJob.php
-│   │   ├── 📄 CleanupLogsJob.php
-│   │   ├── 📄 SyncServersJob.php
-│   │   ├── 📄 CheckVulnerabilitiesJob.php
-│   │   └── 📄 SendAlertJob.php
-│   │
-│   ├── 📁 listeners/
-│   │   ├── 📄 SendLoginNotification.php
-│   │   ├── 📄 LogUserAction.php
-│   │   ├── 📄 CreateAuditTrail.php
-│   │   ├── 📄 SendAlertOnVulnerability.php
-│   │   ├── 📄 UpdateDashboardCache.php
-│   │   └── 📄 PushRealtimeEvent.php
-│   │
-│   ├── 📁 exceptions/
-│   │   ├── 📄 ValidationException.php
-│   │   ├── 📄 AuthException.php
-│   │   ├── 📄 PermissionException.php
-│   │   ├── 📄 NotFoundException.php
-│   │   ├── 📄 DatabaseException.php
-│   │   ├── 📄 ScanException.php
-│   │   ├── 📄 BackupException.php
-│   │   └── 📄 ApiException.php
-│   │
-│   ├── 📁 config/
-│   │   ├── 📄 app.php
-│   │   ├── 📄 database.php
-│   │   ├── 📄 jwt.php
-│   │   ├── 📄 rbac.php
-│   │   ├── 📄 criteria_categories.php
-│   │   ├── 📄 criteria_280.php
-│   │   ├── 📄 menu.php
-│   │   ├── 📄 mail.php
-│   │   ├── 📄 cache.php
-│   │   ├── 📄 queue.php
-│   │   ├── 📄 filesystems.php
-│   │   └── 📄 services.php
-│   │
-│   ├── 📁 lang/
-│   │   ├── 📁 en/
-│   │   │   ├── 📄 auth.php
-│   │   │   ├── 📄 validation.php
-│   │   │   ├── 📄 criteria.php
-│   │   │   └── 📄 messages.php
-│   │   ├── 📁 vi/
-│   │   │   ├── 📄 auth.php
-│   │   │   ├── 📄 validation.php
-│   │   │   ├── 📄 criteria.php
-│   │   │   └── 📄 messages.php
-│   │   └── 📁 ja/
-│   │       ├── 📄 auth.php
-│   │       ├── 📄 validation.php
-│   │       ├── 📄 criteria.php
-│   │       └── 📄 messages.php
-│   │
-│   ├── 📁 storage/
-│   │   ├── 📁 logs/
-│   │   │   ├── 📄 app.log
-│   │   │   ├── 📄 auth.log
-│   │   │   ├── 📄 scan.log
-│   │   │   ├── 📄 error.log
-│   │   │   ├── 📄 attack.log
-│   │   │   ├── 📄 api.log
-│   │   │   ├── 📄 database.log
-│   │   │   ├── 📄 cron.log
-│   │   │   └── 📄 debug.log
-│   │   ├── 📁 uploads/
-│   │   │   ├── 📁 evidence/
-│   │   │   ├── 📁 reports/
-│   │   │   ├── 📁 avatars/
-│   │   │   └── 📁 temp/
-│   │   ├── 📁 backups/
-│   │   │   ├── 📁 database/
-│   │   │   └── 📁 files/
-│   │   ├── 📁 cache/
-│   │   └── 📁 framework/
-│   │       ├── 📁 sessions/
-│   │       ├── 📁 cache/
-│   │       └── 📁 views/
-│   │
-│   ├── 📁 bootstrap/
-│   │   ├── 📄 app.php
-│   │   ├── 📄 routes.php
-│   │   └── 📄 middleware.php
-│   │
-│   ├── 📁 database/
-│   │   ├── 📁 migrations/
-│   │   │   ├── 📄 2024_01_01_000001_create_users_table.php
-│   │   │   ├── 📄 2024_01_01_000002_create_roles_table.php
-│   │   │   ├── 📄 2024_01_01_000003_create_permissions_table.php
-│   │   │   ├── 📄 2024_01_01_000004_create_role_permission_table.php
-│   │   │   ├── 📄 2024_01_01_000005_create_categories_table.php
-│   │   │   ├── 📄 2024_01_01_000006_create_criteria_table.php
-│   │   │   ├── 📄 2024_01_01_000007_create_servers_table.php
-│   │   │   ├── 📄 2024_01_01_000008_create_user_server_table.php
-│   │   │   ├── 📄 2024_01_01_000009_create_assessment_results_table.php
-│   │   │   ├── 📄 2024_01_01_000010_create_assessment_reports_table.php
-│   │   │   ├── 📄 2024_01_01_000011_create_vulnerabilities_table.php
-│   │   │   ├── 📄 2024_01_01_000012_create_vulnerability_history_table.php
-│   │   │   ├── 📄 2024_01_01_000013_create_alerts_table.php
-│   │   │   ├── 📄 2024_01_01_000014_create_alert_notes_table.php
-│   │   │   ├── 📄 2024_01_01_000015_create_audit_logs_table.php
-│   │   │   ├── 📄 2024_01_01_000016_create_login_attempts_table.php
-│   │   │   ├── 📄 2024_01_01_000017_create_user_sessions_table.php
-│   │   │   ├── 📄 2024_01_01_000018_create_password_resets_table.php
-│   │   │   ├── 📄 2024_01_01_000019_create_backups_table.php
-│   │   │   ├── 📄 2024_01_01_000020_create_system_settings_table.php
-│   │   │   ├── 📄 2024_01_01_000021_create_notifications_table.php
-│   │   │   ├── 📄 2024_01_01_000022_create_attack_logs_table.php
-│   │   │   ├── 📄 2024_01_01_000023_create_blocked_ips_table.php
-│   │   │   ├── 📄 2024_01_01_000024_create_cve_cache_table.php
-│   │   │   ├── 📄 2024_01_01_000025_create_api_logs_table.php
-│   │   │   ├── 📄 2024_01_01_000026_create_rate_limits_table.php
-│   │   │   ├── 📄 2024_01_01_000027_create_report_schedules_table.php
-│   │   │   ├── 📄 2024_01_01_000028_create_jobs_table.php
-│   │   │   ├── 📄 2024_01_01_000029_create_failed_jobs_table.php
-│   │   │   ├── 📄 2024_01_15_000001_add_indexes_to_users_table.php
-│   │   │   ├── 📄 2024_01_15_000002_add_indexes_to_criteria_table.php
-│   │   │   ├── 📄 2024_01_15_000003_add_indexes_to_assessment_results_table.php
-│   │   │   ├── 📄 2024_01_15_000004_add_indexes_to_alerts_table.php
-│   │   │   ├── 📄 2024_01_15_000005_add_indexes_to_audit_logs_table.php
-│   │   │   ├── 📄 2024_01_15_000006_add_foreign_keys_table.php
-│   │   │   ├── 📄 2024_01_20_000001_add_two_factor_fields_to_users_table.php
-│   │   │   ├── 📄 2024_01_20_000002_add_soft_deletes_to_servers_table.php
-│   │   │   └── 📄 2024_01_20_000003_add_status_to_assessment_reports_table.php
-│   │   └── 📁 seeds/
-│   │       ├── 📄 DatabaseSeeder.php
-│   │       ├── 📄 RoleSeeder.php
-│   │       ├── 📄 PermissionSeeder.php
-│   │       ├── 📄 CategorySeeder.php
-│   │       ├── 📄 CriteriaSeeder.php
-│   │       ├── 📄 UserSeeder.php
-│   │       ├── 📄 ServerSeeder.php
-│   │       ├── 📄 SettingSeeder.php
-│   │       └── 📄 AssessmentSeeder.php
-│   │
-│   ├── 📁 tests/
-│   │   ├── 📁 Unit/
-│   │   │   ├── 📄 AuthTest.php
-│   │   │   ├── 📄 RBACTest.php
-│   │   │   ├── 📄 CriteriaTest.php
-│   │   │   ├── 📄 ScoreCalculatorTest.php
-│   │   │   └── 📄 ScannerTest.php
-│   │   ├── 📁 Feature/
-│   │   │   ├── 📄 ApiAuthTest.php
-│   │   │   ├── 📄 ApiCriteriaTest.php
-│   │   │   ├── 📄 ApiAssessmentTest.php
-│   │   │   └── 📄 ApiReportTest.php
-│   │   ├── 📁 Integration/
-│   │   │   ├── 📄 DatabaseTest.php
-│   │   │   └── 📄 QueueTest.php
-│   │   ├── 📄 TestCase.php
-│   │   └── 📄 CreatesApplication.php
-│   │
-│   ├── 📄 phpunit.xml
-│   └── 📄 artisan
+├── 📁 frontend/                # HTML/CSS/JS Frontend
+│   ├── 📁 pages/               # HTML pages (35 files)
+│   ├── 📁 assets/              # CSS, JS, images
+│   └── 📁 templates/           # Reusable templates
 │
-├── 📁 frontend/
-│   ├── 📄 index.html
-│   │
-│   ├── 📁 pages/
-│   │   ├── 📄 login.html
-│   │   ├── 📄 404.html
-│   │   ├── 📄 dashboard.html
-│   │   ├── 📄 servers.html
-│   │   ├── 📄 servers-add.html
-│   │   ├── 📄 servers-edit.html
-│   │   ├── 📄 servers-detail.html
-│   │   ├── 📄 categories.html
-│   │   ├── 📄 criteria.html
-│   │   ├── 📄 criteria-add.html
-│   │   ├── 📄 criteria-edit.html
-│   │   ├── 📄 criteria-import.html
-│   │   ├── 📄 assessments.html
-│   │   ├── 📄 assessment-run.html
-│   │   ├── 📄 assessment-detail.html
-│   │   ├── 📄 vulnerabilities.html
-│   │   ├── 📄 alerts.html
-│   │   ├── 📄 users.html
-│   │   ├── 📄 users-add.html
-│   │   ├── 📄 users-edit.html
-│   │   ├── 📄 roles.html
-│   │   ├── 📄 backup.html
-│   │   ├── 📄 reports.html
-│   │   ├── 📄 report-detail.html
-│   │   ├── 📄 profile.html
-│   │   ├── 📄 settings.html
-│   │   ├── 📄 notifications.html
-│   │   ├── 📄 search.html
-│   │   ├── 📄 compliance.html
-│   │   ├── 📄 schedules.html
-│   │   ├── 📄 queue.html
-│   │   ├── 📄 cache.html
-│   │   ├── 📄 logs.html
-│   │   ├── 📄 health.html
-│   │   └── 📄 docs.html
-│   │
-│   ├── 📁 assets/
-│   │   ├── 📁 css/
-│   │   │   ├── 📄 main.css
-│   │   │   ├── 📄 admin.css
-│   │   │   ├── 📄 dashboard.css
-│   │   │   ├── 📄 criteria.css
-│   │   │   ├── 📄 responsive.css
-│   │   │   ├── 📄 dark-mode.css
-│   │   │   └── 📄 print.css
-│   │   │
-│   │   ├── 📁 js/
-│   │   │   ├── 📄 app.js
-│   │   │   ├── 📄 api.js
-│   │   │   ├── 📄 auth.js
-│   │   │   ├── 📄 rbac.js
-│   │   │   ├── 📄 utils.js
-│   │   │   ├── 📄 dashboard.js
-│   │   │   ├── 📄 servers.js
-│   │   │   ├── 📄 categories.js
-│   │   │   ├── 📄 criteria.js
-│   │   │   ├── 📄 assessments.js
-│   │   │   ├── 📄 alerts.js
-│   │   │   ├── 📄 users.js
-│   │   │   ├── 📄 roles.js
-│   │   │   ├── 📄 backup.js
-│   │   │   ├── 📄 reports.js
-│   │   │   ├── 📄 profile.js
-│   │   │   ├── 📄 socket.js
-│   │   │   ├── 📄 charts.js
-│   │   │   ├── 📄 datatable.js
-│   │   │   ├── 📄 notifications.js
-│   │   │   ├── 📄 search.js
-│   │   │   ├── 📄 compliance.js
-│   │   │   └── 📄 health.js
-│   │   │
-│   │   ├── 📁 vendor/
-│   │   │   ├── 📁 bootstrap/
-│   │   │   ├── 📁 jquery/
-│   │   │   ├── 📁 chart.js/
-│   │   │   ├── 📁 socket.io/
-│   │   │   ├── 📁 datatables/
-│   │   │   ├── 📁 select2/
-│   │   │   ├── 📁 moment/
-│   │   │   ├── 📁 exceljs/
-│   │   │   ├── 📁 jspdf/
-│   │   │   ├── 📁 fontawesome/
-│   │   │   └── 📁 sweetalert/
-│   │   │
-│   │   └── 📁 images/
-│   │       ├── 📁 logo/
-│   │       │   ├── 📄 logo.png
-│   │       │   ├── 📄 logo-white.png
-│   │       │   └── 📄 favicon.ico
-│   │       ├── 📁 icons/
-│   │       │   ├── 📄 critical.svg
-│   │       │   ├── 📄 high.svg
-│   │       │   ├── 📄 medium.svg
-│   │       │   └── 📄 low.svg
-│   │       └── 📄 loading.gif
-│   │
-│   └── 📁 templates/
-│       ├── 📄 sidebar.php
-│       ├── 📄 header.php
-│       ├── 📄 footer.php
-│       └── 📄 modal.php
+├── 📁 realtime/                # Node.js WebSocket Server
+│   ├── 📁 src/                 # Source code
+│   └── 📁 handlers/            # Event handlers
 │
-├── 📁 realtime/
-│   ├── 📄 server.js
-│   ├── 📄 package.json
-│   ├── 📄 .env
-│   ├── 📄 ecosystem.config.js
-│   │
-│   ├── 📁 src/
-│   │   ├── 📄 index.js
-│   │   ├── 📄 app.js
-│   │   │
-│   │   ├── 📁 config/
-│   │   │   ├── 📄 database.js
-│   │   │   ├── 📄 redis.js
-│   │   │   └── 📄 socket.js
-│   │   │
-│   │   ├── 📁 middleware/
-│   │   │   ├── 📄 auth.js
-│   │   │   ├── 📄 rateLimit.js
-│   │   │   └── 📄 logger.js
-│   │   │
-│   │   ├── 📁 handlers/
-│   │   │   ├── 📄 connection.js
-│   │   │   ├── 📄 auth.js
-│   │   │   ├── 📄 alert.js
-│   │   │   ├── 📄 scan.js
-│   │   │   ├── 📄 assessment.js
-│   │   │   ├── 📄 metric.js
-│   │   │   └── 📄 notification.js
-│   │   │
-│   │   ├── 📁 rooms/
-│   │   │   ├── 📄 userRoom.js
-│   │   │   ├── 📄 serverRoom.js
-│   │   │   └── 📄 adminRoom.js
-│   │   │
-│   │   └── 📁 utils/
-│   │       ├── 📄 logger.js
-│   │       └── 📄 helpers.js
-│   │
-│   └── 📁 tests/
-│       ├── 📄 socket.test.js
-│       └── 📄 handler.test.js
-│
-├── 📁 database/
-│   ├── 📄 schema.sql
-│   ├── 📄 seed_all.sql
-│   ├── 📄 seed_categories_17.sql
-│   ├── 📄 seed_criteria_280.sql
-│   ├── 📄 seed_roles.sql
-│   ├── 📄 seed_permissions.sql
-│   ├── 📄 seed_users.sql
-│   │
-│   ├── 📁 migrations/
-│   │   ├── 📄 V1__Create_users_table.sql
-│   │   ├── 📄 V2__Create_roles_table.sql
-│   │   ├── 📄 V3__Create_categories_table.sql
-│   │   ├── 📄 V4__Create_criteria_table.sql
-│   │   ├── 📄 V5__Create_servers_table.sql
-│   │   ├── 📄 V6__Create_assessment_results_table.sql
-│   │   ├── 📄 V7__Create_reports_table.sql
-│   │   ├── 📄 V8__Create_alerts_table.sql
-│   │   ├── 📄 V9__Create_vulnerabilities_table.sql
-│   │   ├── 📄 V10__Create_audit_logs_table.sql
-│   │   └── 📄 V11__Add_indexes.sql
-│   │
-│   ├── 📁 procedures/
-│   │   ├── 📄 sp_calculate_score.sql
-│   │   ├── 📄 sp_get_dashboard_stats.sql
-│   │   ├── 📄 sp_cleanup_old_logs.sql
-│   │   └── 📄 sp_generate_report.sql
-│   │
-│   ├── 📁 triggers/
-│   │   ├── 📄 trg_audit_user_changes.sql
-│   │   ├── 📄 trg_update_server_score.sql
-│   │   └── 📄 trg_create_alert_on_fail.sql
-│   │
-│   └── 📁 views/
-│       ├── 📄 vw_server_summary.sql
-│       ├── 📄 vw_compliance_status.sql
-│       └── 📄 vw_monthly_trend.sql
-│
-├── 📁 docs/
-│   ├── 📄 README.md
-│   ├── 📄 INSTALLATION.md
-│   ├── 📄 DEPLOYMENT.md
-│   │
-│   ├── 📁 api/
-│   │   ├── 📄 authentication.md
-│   │   ├── 📄 users.md
-│   │   ├── 📄 criteria.md
-│   │   ├── 📄 assessments.md
-│   │   ├── 📄 reports.md
-│   │   └── 📄 openapi.yaml
-│   │
-│   ├── 📁 guides/
-│   │   ├── 📄 user-manual.md
-│   │   ├── 📄 admin-manual.md
-│   │   ├── 📄 security-officer-guide.md
-│   │   └── 📄 viewer-guide.md
-│   │
-│   ├── 📁 references/
-│   │   ├── 📄 280-criteria-list.md
-│   │   ├── 📄 17-categories.md
-│   │   ├── 📄 scoring-formula.md
-│   │   ├── 📄 rbac-matrix.md
-│   │   └── 📄 compliance-mapping.md
-│   │
-│   └── 📁 architecture/
-│       ├── 📄 system-architecture.png
-│       ├── 📄 database-er-diagram.png
-│       └── 📄 sequence-diagrams.md
-│
-├── 📁 scripts/
-│   ├── 📄 deploy.sh
-│   ├── 📄 backup.sh
-│   ├── 📄 restore.sh
-│   ├── 📄 import_criteria.php
-│   ├── 📄 export_criteria.php
-│   ├── 📄 run_assessment.php
-│   ├── 📄 clean_logs.php
-│   ├── 📄 create_admin.php
-│   ├── 📄 reset_password.php
-│   ├── 📄 generate_report.php
-│   ├── 📄 monitor.php
-│   └── 📄 sync_servers.php
-│
-├── 📁 .github/
-│   └── 📁 workflows/
-│       ├── 📄 deploy.yml
-│       ├── 📄 test.yml
-│       ├── 📄 backup.yml
-│       └── 📄 security-scan.yml
-│
-├── 📁 .docker/
-│   ├── 📄 Dockerfile.php
-│   ├── 📄 Dockerfile.nginx
-│   ├── 📄 Dockerfile.node
-│   └── 📄 docker-entrypoint.sh
-│
-├── 📁 .k8s/
-│   ├── 📄 deployment.yaml
-│   ├── 📄 service.yaml
-│   ├── 📄 ingress.yaml
-│   ├── 📄 configmap.yaml
-│   └── 📄 secret.yaml
-│
-├── 📄 docker-compose.yml
-├── 📄 docker-compose.dev.yml
-├── 📄 docker-compose.prod.yml
-├── 📄 Makefile
-├── 📄 phpunit.xml
-├── 📄 .env.example
-├── 📄 .env.testing
-├── 📄 .eslintrc.js
-├── 📄 .prettierrc
-└── 📄 LICENSE
+├── 📁 database/                # SQL scripts
+├── 📁 docs/                    # Documentation
+├── 📁 scripts/                 # Utility scripts
+└── 📁 .github/                 # GitHub Actions workflows
+```
+
+**Tổng cộng: ~400+ files**
+
+---
+
+## 💻 DEVELOPMENT
+
+### Chạy môi trường development
+
+```bash
+# Sử dụng Makefile
+make dev
+
+# Hoặc chạy thủ công
+make backend-start    # PHP server on :8000
+make realtime-start   # WebSocket on :3000
+make frontend-watch   # Frontend with hot reload
+```
+
+### Chạy tests
+
+```bash
+# Tất cả tests
+make test
+
+# Unit tests
+make test-unit
+
+# Feature tests
+make test-feature
+
+# Coverage report
+make test-coverage
+```
+
+### Database
+
+```bash
+# Tạo database
+make db-create
+
+# Chạy migrations
+make migrate
+
+# Seed database
+make seed
+
+# Fresh database (reset + migrate + seed)
+make db-fresh
+
+# Backup database
+make db-backup
+```
+
+### Code quality
+
+```bash
+# Kiểm tra code style
+make lint
+
+# Sửa code style
+make lint-fix
+
+# Kiểm tra bảo mật dependencies
+make security-check
+```
+
+### Maintenance
+
+```bash
+# Xóa cache
+make cache-clear
+
+# Xóa logs
+make logs-clear
+
+# Bật chế độ bảo trì
+make maintenance-on
+
+# Tắt chế độ bảo trì
+make maintenance-off
+
+# Backup toàn bộ
+make backup
+```
+
+---
+
+## 🚀 TRIỂN KHAI PRODUCTION
+
+### Checklist trước khi deploy
+
+- [ ] Đổi tất cả mật khẩu mặc định
+- [ ] Cấu hình HTTPS (SSL/TLS)
+- [ ] Set `APP_ENV=production` và `APP_DEBUG=false`
+- [ ] Cấu hình firewall (chỉ mở port 80, 443)
+- [ ] Cấu hình backup tự động (cron job)
+- [ ] Cấu hình monitoring (health check)
+- [ ] Kiểm tra rate limiting
+- [ ] Cấu hình logging centralized (ELK)
+
+### Deploy với Docker
+
+```bash
+# Build production images
+docker-compose -f docker-compose.prod.yml build
+
+# Run containers
+docker-compose -f docker-compose.prod.yml up -d
+
+# Run migrations
+docker exec security-php php artisan migrate
+
+# Check logs
+docker-compose -f docker-compose.prod.yml logs -f
+```
+
+### Deploy thủ công
+
+```bash
+# 1. Pull code mới nhất
+git pull origin main
+
+# 2. Cập nhật dependencies
+cd backend && composer install --no-dev --optimize-autoloader
+cd ../frontend && npm ci --production
+cd ../realtime && npm ci --production
+
+# 3. Chạy migrations
+php artisan migrate --force
+
+# 4. Clear cache
+php artisan cache:clear
+php artisan view:clear
+
+# 5. Restart services
+sudo systemctl restart php8.1-fpm
+sudo systemctl restart nginx
+pm2 restart realtime
+
+# 6. Kiểm tra
+curl http://localhost/api/health
+```
+
+### Cron Jobs
+
+```bash
+# Backup database mỗi ngày lúc 2h sáng
+0 2 * * * /var/www/security/scripts/backup.sh
+
+# Clean logs mỗi tuần
+0 3 * * 0 /var/www/security/scripts/clean_logs.sh
+
+# Sync servers mỗi giờ
+0 * * * * /var/www/security/scripts/sync_servers.sh
+
+# Generate scheduled reports
+0 8 * * * /var/www/security/scripts/generate_report.sh
+```
+
+---
+
+## 🔧 XỬ LÝ SỰ CỐ
+
+### Lỗi 500 Internal Server Error
+
+```bash
+# Kiểm tra log PHP
+tail -f backend/storage/logs/error.log
+
+# Kiểm tra log Nginx
+tail -f /var/log/nginx/error.log
+
+# Kiểm tra permissions
+sudo chown -R www-data:www-data backend/storage/
+sudo chmod -R 775 backend/storage/
+```
+
+### Lỗi kết nối database
+
+```bash
+# Kiểm tra MySQL
+sudo systemctl status mysql
+
+# Kiểm tra credentials
+mysql -u root -p -e "SELECT 1"
+
+# Reset password
+sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'new_password';"
+```
+
+### Lỗi JWT Token
+
+```bash
+# Kiểm tra JWT_SECRET trong .env
+# Xóa token cũ trong localStorage (client)
+# Refresh token
+```
+
+### Lỗi WebSocket
+
+```bash
+# Kiểm tra Node.js service
+pm2 status
+pm2 logs realtime
+
+# Restart
+pm2 restart realtime
+
+# Kiểm tra port
+netstat -tlnp | grep 3000
+```
+
+### Lỗi upload file
+
+```bash
+# Kiểm tra thư mục uploads
+ls -la backend/storage/uploads/
+
+# Kiểm tra permissions
+chmod -R 755 backend/storage/uploads/
+
+# Kiểm tra dung lượng
+df -h
+```
+
+---
+
+## 📚 TÀI LIỆU
+
+| Tài liệu | Mô tả |
+|----------|-------|
+| [API Documentation](docs/api/README.md) | Chi tiết các API endpoints |
+| [User Manual](docs/guides/user-manual.md) | Hướng dẫn sử dụng cho từng role |
+| [Admin Manual](docs/guides/admin-manual.md) | Hướng dẫn quản trị hệ thống |
+| [280 Criteria List](docs/references/280-criteria-list.md) | Danh sách đầy đủ 280 tiêu chí |
+| [17 Categories](docs/references/17-categories.md) | 17 lĩnh vực đánh giá |
+| [Scoring Formula](docs/references/scoring-formula.md) | Công thức tính điểm |
+| [RBAC Matrix](docs/references/rbac-matrix.md) | Ma trận phân quyền |
+| [Deployment Guide](docs/DEPLOYMENT.md) | Hướng dẫn triển khai |
+
+---
+
+## 🤝 CONTRIBUTING
+
+Chúng tôi hoan nghênh mọi đóng góp! Vui lòng:
+
+1. Fork dự án
+2. Tạo branch mới (`git checkout -b feature/amazing-feature`)
+3. Commit thay đổi (`git commit -m 'Add amazing feature'`)
+4. Push lên branch (`git push origin feature/amazing-feature`)
+5. Mở Pull Request
+
+### Coding Standards
+
+- PSR-12 coding style
+- PSR-4 autoloading
+- PHPUnit tests cho code mới
+- Documentation cho API changes
+
+---
+
+## 📞 HỖ TRỢ
+
+- **Documentation**: `/docs` directory
+- **API Reference**: `/docs/api/openapi.yaml`
+- **Issues**: [GitHub Issues](https://github.com/security-platform/assessment/issues)
+- **Email**: support@security-platform.com
+
+---
+
+## 📝 GIẤY PHÉP
+
+MIT License - Copyright (c) 2024 Security Assessment Team
+
+```
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions...
+
+Full license text: [LICENSE](LICENSE)
+```
+
+---
+
+## ⭐ ACKNOWLEDGMENTS
+
+- [PHP](https://php.net) - Backend language
+- [MySQL](https://mysql.com) - Database
+- [Node.js](https://nodejs.org) - WebSocket server
+- [Bootstrap](https://getbootstrap.com) - Frontend framework
+- [Chart.js](https://chartjs.org) - Charts library
+- [Socket.io](https://socket.io) - WebSocket library
+- [FPDF](https://fpdf.org) - PDF generation
+- [PhpSpreadsheet](https://phpspreadsheet.readthedocs.io) - Excel export
+
+---
+
+**⭐ Star this repository if you find it useful!**
+
+**📧 Contact: support@security-platform.com**
+
+**🌐 Website: https://security-platform.com**
+
+---
+
+*Last updated: December 2024 | Version 3.0.0*
+```
